@@ -81,9 +81,25 @@ for t=1:size(x_stimlock,1)
         
         x_warp(t,:)=normLength(x,warplength,true);
         y_warp(t,:)=normLength(y,warplength,true);
-        velocity_warp(t,:)=normLength(velocity,warplength,true);        
-        angle_warp(t,:)=normLength(theangle,warplength,true);                
-		dev_warp(t,:)=normLength(dev,warplength,true);                
+        dev_warp(t,:)=normLength(dev,warplength,true);                
+        
+        %recalculate angle and velocity for the case that stimlock data was
+        %totally oversampled.
+        x_diff=diff(x_warp(t,:));
+        y_diff=diff(y_warp(t,:));
+        trialduration=length(x)/sf*1000;%duration of whole trial in ms
+        sliceduration=trialduration/warplength;%duration of one slice
+        velocity=sqrt(x_diff.^2+y_diff.^2)*1000/sliceduration;
+        velocity_warp(t,:)=normLength(velocity,warplength,true);  
+        %correct angle for sign(y_diff) to avoid jumps in angle at pi/2
+        y_diff_correct=sign(y_diff);
+        y_diff_correct(y_diff_correct==0)=1;
+        theangle=atan(x_diff./y_diff).*sign(y_diff_correct);
+        theangle(isnan(theangle))=sign(x_diff(isnan(theangle)))*(pi/2);
+        angle_warp(t,:)=normLength(theangle,warplength,true);
+        %velocity_warp(t,:)=normLength(velocity,warplength,true);        
+        %angle_warp(t,:)=normLength(theangle,warplength,true);                
+		
 end
 
 
